@@ -386,6 +386,21 @@ const Music=(()=>{
       srcs.forEach(x=>{x.start(st); x.stop(st+d+.05);}); }); }
   };
 
+
+  let iosAudio=null;
+  function unlockIOS(){
+    try{ if(navigator.audioSession) navigator.audioSession.type='playback'; }catch(e){}
+    if(iosAudio) { iosAudio.play().catch(()=>{}); return; }
+    try{
+      const sr=8000, n=sr/2, buf=new ArrayBuffer(44+n*2), v=new DataView(buf);
+      const w=(o,s)=>{ for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+      w(0,'RIFF'); v.setUint32(4,36+n*2,true); w(8,'WAVE'); w(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+      v.setUint32(24,sr,true); v.setUint32(28,sr*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true); w(36,'data'); v.setUint32(40,n*2,true);
+      iosAudio=document.createElement('audio'); iosAudio.src=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));
+      iosAudio.loop=true; iosAudio.setAttribute('playsinline',''); iosAudio.setAttribute('x-webkit-airplay','deny'); iosAudio.volume=0.01;
+      iosAudio.play().catch(()=>{});
+    }catch(e){}
+  }
   const tokens=s=>s.split(/\s+/).filter(Boolean);
   function melody(str,t0,sd,play){ const tk=tokens(str); for(let i=0;i<tk.length;i++){ const x=tk[i]; if(x==='-'||x==='.') continue; let len=1; while(tk[i+len]==='-') len++; play(t0+i*sd,m(x),len*sd); } }
 
@@ -458,9 +473,10 @@ const Music=(()=>{
     themes:Object.keys(T),
     get on(){ return playing; },
     start(theme){
+      unlockIOS();
       if(!ctx){ try{ build(new (window.AudioContext||window.webkitAudioContext)()); }catch(e){ return false; } }
       if(theme){ cur=theme; pending=null; bar=0; }
-      ctx.resume && ctx.resume();
+      if(ctx.state!=='running' && ctx.resume) ctx.resume();
       playing=true; nextT=ctx.currentTime+.12;
       out.gain.cancelScheduledValues(ctx.currentTime); out.gain.setValueAtTime(out.gain.value,ctx.currentTime); out.gain.linearRampToValueAtTime(.9,ctx.currentTime+1.2);
       clearInterval(timer); timer=setInterval(tick,110); tick(); return true;
