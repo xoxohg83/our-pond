@@ -1,3 +1,9 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ECE5D9">
 <title>Xo &amp; the Frog</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +36,7 @@ body{
 
 /* ---------- FRAME ---------- */
 .frame{
-  position:relative; width:min(100%, max(280px, calc((100svh - 170px) * 0.5625)), 480px);
+  position:relative; width:min(100%, max(280px, calc((100svh - 150px) * 0.5625)), 480px);
   aspect-ratio:9/16; container-type:inline-size; overflow:hidden; border-radius:6px; cursor:pointer;
   background:
     radial-gradient(40% 30% at 20% 15%, rgba(255,255,255,.8), transparent 70%),
@@ -40,6 +46,7 @@ body{
     linear-gradient(160deg,#EFE7DA,#E2E4DA);
   box-shadow:0 18px 50px rgba(70,55,35,.22), 0 2px 6px rgba(70,55,35,.15);
 }
+@media (max-width:560px){ body{padding-block:12px 24px; gap:10px} .head .eyebrow{display:none} .head h1{font-size:18px} .frame{width:100%; border-radius:4px} }
 .frame:focus-visible{outline:2px solid var(--gold); outline-offset:4px}
 .book{position:absolute; inset:0; transform:scale(.8); perspective:2600px; transform-style:preserve-3d}
 .book.static-open{transform:scale(1)}
@@ -196,13 +203,15 @@ body{
 .balloon{transform-box:fill-box; transform-origin:50% 100%; animation:sway 3.5s ease-in-out infinite alternate}
 .endcard .btns{display:flex; flex-wrap:wrap; gap:8px; justify-content:center}
 .endcard a.btn{text-decoration:none}
-.tapstart{position:absolute; inset:0; z-index:45; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:12%; gap:2cqw; background:linear-gradient(transparent 55%, rgba(60,45,25,.28)); border:0; width:100%; cursor:pointer; color:#FFF9EC; font-family:var(--sc); letter-spacing:.2em; font-size:4cqw; text-shadow:0 1px 6px rgba(40,30,15,.6)}
-.tapstart .pulse{width:16cqw; height:16cqw; border-radius:50%; display:grid; place-items:center; background:rgba(255,249,236,.2); border:1.5px solid rgba(255,249,236,.85); animation:pulse 1.8s ease-in-out infinite}
-.tapstart .pulse svg{width:7cqw; height:7cqw}
+.tapstart{position:absolute; inset:0; z-index:45; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; padding-bottom:7%; gap:1.5cqw; background:linear-gradient(transparent 55%, rgba(60,45,25,.28)); border:0; width:100%; cursor:pointer; color:#FFF9EC; font-family:var(--sc); letter-spacing:.2em; font-size:4cqw; text-shadow:0 1px 6px rgba(40,30,15,.6)}
+.tapstart .pulse{width:12cqw; height:12cqw; border-radius:50%; display:grid; place-items:center; background:rgba(255,249,236,.2); border:1.5px solid rgba(255,249,236,.85); animation:pulse 1.8s ease-in-out infinite}
+.tapstart .pulse svg{width:5.5cqw; height:5.5cqw}
 @keyframes pulse{50%{transform:scale(1.08); background:rgba(255,249,236,.35)}}
 .frame.paused *, .frame.paused *::before, .frame.paused *::after{animation-play-state:paused!important}
 </style>
 
+</head>
+<body>
 <!-- shared paint: gradients + watercolor filters -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -1041,3 +1050,5 @@ $('musicBtn').addEventListener('click',()=>{ musicOn=!musicOn; $('musicBtn').tex
   if(musicOn && playing) Music.start(); else Music.stop(); });
 setPlaying(false); $('playLabel').textContent='Play';
 </script>
+</body>
+</html>
