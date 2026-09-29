@@ -207,6 +207,32 @@ body{
 .tapstart .pulse{width:12cqw; height:12cqw; border-radius:50%; display:grid; place-items:center; background:rgba(255,249,236,.2); border:1.5px solid rgba(255,249,236,.85); animation:pulse 1.8s ease-in-out infinite}
 .tapstart .pulse svg{width:5.5cqw; height:5.5cqw}
 @keyframes pulse{50%{transform:scale(1.08); background:rgba(255,249,236,.35)}}
+.finale{position:absolute; inset:0; z-index:35; opacity:0; pointer-events:none; overflow:hidden; background:#E9D8C2}
+.finale.on{animation:sIn 1.8s ease forwards}
+.finale svg{position:absolute; inset:0; width:100%; height:100%}
+.finale .fkb{position:absolute; inset:0; transform-origin:56% 33%; transform:scale(1.7)}
+.finale.on .fkb{animation:pullBack 6.5s cubic-bezier(.35,0,.2,1) forwards}
+@keyframes pullBack{from{transform:scale(1.7)}to{transform:scale(1)}}
+.slotBook{opacity:0}
+.finale.on .slotBook{animation:slotIn 1.5s .5s cubic-bezier(.3,1.25,.5,1) forwards}
+@keyframes slotIn{from{opacity:0; transform:translateY(-70px)}to{opacity:1; transform:none}}
+.couple{opacity:0}
+.finale.on .couple{animation:coupleIn 2s 3.2s ease forwards}
+@keyframes coupleIn{from{opacity:0; transform:translateY(18px)}to{opacity:1; transform:none}}
+.finale.on .leanL{animation:leanL 1.8s 4.6s ease-in-out forwards}
+.finale.on .leanR{animation:leanR 1.8s 4.6s ease-in-out forwards}
+@keyframes leanL{to{transform:translateX(10px)}}
+@keyframes leanR{to{transform:translateX(-10px)}}
+.fh{opacity:0}
+.finale.on .fh{animation:riseUp var(--dur,4s) ease-out infinite; animation-delay:var(--d,6s)}
+.finale .fcopy{position:absolute; left:4%; right:4%; bottom:2%; text-align:center; z-index:2}
+.finale .fl1{font-family:var(--script); font-size:9.6cqw; white-space:nowrap; line-height:1.05; color:#9E4640; text-shadow:0 0 2px #FFF8EE, 0 0 6px #FFF8EE, 0 0 16px rgba(255,248,238,.95), 0 2px 24px rgba(255,248,238,.9); opacity:0}
+.finale .fl2{margin:1cqw 0 0; font-family:var(--sc); letter-spacing:.2em; font-size:3.4cqw; color:#6E5A3A; text-shadow:0 0 8px rgba(250,242,230,.95); opacity:0}
+.finale.on .fl1{animation:rise 2s 6.4s cubic-bezier(.2,.7,.2,1) forwards}
+.finale.on .fl2{animation:rise 2s 7.4s cubic-bezier(.2,.7,.2,1) forwards}
+.book.shelve{animation:shelve 2.2s cubic-bezier(.5,0,.3,1) forwards}
+@keyframes shelve{from{transform:scale(.8); opacity:1}to{transform:translate(6%,-17%) scale(.1); opacity:0}}
+.book.shelved{opacity:0}
 .frame.paused *, .frame.paused *::before, .frame.paused *::after{animation-play-state:paused!important}
 </style>
 
@@ -296,6 +322,10 @@ body{
     <span class="pulse"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18a3 3 0 1 1-2-2.83V5l12-2v11a3 3 0 1 1-2-2.83V6.3L9 7.6z" fill="currentColor"/></svg></span>
     Tap to open the book
   </button>
+  <div class="finale" id="finale" aria-hidden="true">
+    <div class="fkb"><svg id="finaleArt" viewBox="0 0 900 1600" preserveAspectRatio="xMidYMid slice"></svg></div>
+    <div class="fcopy"><div class="fl1">Och så började vår saga</div></div>
+  </div>
   <div class="fade" id="fade"></div>
   <div class="endcard" id="endcard" hidden>
     <div class="script" style="font-size:13cqw">To be continued&hellip;</div>
@@ -570,10 +600,90 @@ function xo(x,y,s,o={}){
     <path d="M38 -515 L48 -500 L39 -495 Z" fill="${skin}"/>
     <path d="M40 -532 C34 -557 4 -567 -22 -557 C-45 -548 -49 -520 -41 -490 C-35 -470 -24 -470 -18 -486 C-14 -506 -4 -520 14 -526 C24 -530 34 -526 40 -532 Z" fill="${hair}"/>
     ${face}${flower}
-    <path d="M30 -432 Q72 -402 100 -352 Q118 -320 132 -294" stroke="${skin}" stroke-width="15" stroke-linecap="round" fill="none"/>
-    <ellipse cx="136" cy="-287" rx="11" ry="8.5" fill="${skin}"/>
+    ${o.embrace?`<path d="M30 -432 Q52 -452 64 -476" stroke="${skin}" stroke-width="15" stroke-linecap="round" fill="none"/><ellipse cx="66" cy="-481" rx="10" ry="8" fill="${skin}"/>`
+      :`<path d="M30 -432 Q72 -402 100 -352 Q118 -320 132 -294" stroke="${skin}" stroke-width="15" stroke-linecap="round" fill="none"/><ellipse cx="136" cy="-287" rx="11" ry="8.5" fill="${skin}"/>`}
     <ellipse cx="30" cy="-438" rx="19" ry="15" fill="${sleeve}"/>
   </g></g>`;
+}
+
+
+/* Niclas as the prince: navy coat, soft pink sash and cape lining, the frog's crown. Faces right. */
+function prince(x,y,s,o={}){
+  const navy='#2F4068', navyDk='#243252', skin='#EDCBB0', hair='#E2BE72', hairHi='#F4DFA4', pink='#EFC3C8';
+  const sx=o.flip?-s:s;
+  return `<g transform="translate(${x} ${y}) scale(${sx} ${s})"><g filter="url(#wc)">
+    <path d="M-40 -470 C-72 -380 -84 -220 -72 -112 L58 -112 C66 -220 62 -380 40 -470 Z" fill="${navyDk}"/>
+    <path d="M-72 -122 Q-8 -104 58 -122 L58 -112 L-72 -112Z" fill="${pink}"/>
+    <rect x="-30" y="-312" width="27" height="262" rx="9" fill="#26304A"/><rect x="4" y="-312" width="27" height="262" rx="9" fill="#26304A"/>
+    <path d="M-34 -64 h32 v58 q0 6 -6 6 h-26z" fill="#1C2236"/><path d="M2 -64 h32 v44 q14 2 20 12 q2 8 -6 8 h-46z" fill="#1C2236"/>
+    <path d="M40 -462 Q92 -420 118 -372" stroke="${navy}" stroke-width="20" stroke-linecap="round" fill="none"/>
+    <ellipse cx="121" cy="-366" rx="10" ry="8" fill="${skin}"/>
+    <path d="M-46 -472 Q-52 -380 -60 -288 L-60 -248 L60 -248 L60 -288 Q52 -380 46 -472 Q0 -488 -46 -472Z" fill="${navy}"/>
+    <path d="M-40 -466 L52 -300 L40 -290 L-50 -452Z" fill="${pink}"/>
+    <path d="M6 -470 L8 -250" stroke="#C9A45A" stroke-width="3"/>
+    ${[-438,-404,-370,-336].map(yy=>`<circle cx="20" cy="${yy}" r="4.2" fill="url(#goldG)"/>`).join('')}
+    <rect x="-60" y="-306" width="120" height="13" rx="3" fill="#1C2236"/><rect x="0" y="-307" width="16" height="15" rx="2" fill="url(#goldG)"/>
+    <path d="M-60 -250 L60 -250" stroke="#C9A45A" stroke-width="3"/>
+    <ellipse cx="-38" cy="-470" rx="22" ry="8" fill="url(#goldG)"/><ellipse cx="40" cy="-468" rx="22" ry="8" fill="url(#goldG)"/>
+    <path d="M-16 -488 L2 -468 L18 -488Z" fill="#F6EFE3"/>
+    <rect x="-10" y="-516" width="20" height="36" rx="6" fill="${skin}"/>
+    <ellipse cx="6" cy="-548" rx="35" ry="42" fill="${skin}"/>
+    <path d="M39 -556 L49 -540 L40 -536Z" fill="${skin}"/>
+    <ellipse cx="-12" cy="-545" rx="7" ry="10" fill="#E2B598"/>
+    <path d="M42 -566 C40 -598 4 -608 -24 -596 C-46 -586 -50 -556 -42 -530 C-38 -518 -28 -522 -26 -538 C-24 -558 -8 -572 12 -575 C26 -577 36 -571 42 -566Z" fill="${hair}"/>
+    <path d="M42 -568 C30 -588 8 -592 -8 -584 C12 -580 28 -574 38 -558Z" fill="${hairHi}"/>
+    <path d="M-30 -586 C-20 -596 -4 -598 10 -594" stroke="${hairHi}" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M18 -552 Q26 -546 34 -552" stroke="#5A4A3A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="25" cy="-532" rx="7" ry="4" fill="#E39A92" opacity=".35"/>
+    <path d="M33 -522 Q37 -519 42 -523" stroke="#B0706A" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+    ${crown(2,-590,.62,-4)}
+  </g></g>`;
+}
+function finaleArt(){
+  seed=31;
+  const cols=['#8FA98A','#E6B8AC','#9DB0C8','#3B4C6E','#EFE3CC','#C9A45A','#F0C9C9','#6F8C67','#D7A7A0'];
+  const book=(x,base,w,h,c,lean=0,label='')=>{
+    const dark=c==='#3B4C6E'||c==='#6F8C67'||c==='#2F4068';
+    return `<g transform="translate(${x} ${base}) rotate(${lean})"><rect x="0" y="${-h}" width="${w}" height="${h}" rx="3" fill="${c}"/>
+      <rect x="0" y="${-h+14}" width="${w}" height="5" fill="#C9A45A" opacity=".85"/><rect x="0" y="-22" width="${w}" height="5" fill="#C9A45A" opacity=".85"/>
+      <rect x="${w*.62}" y="${-h}" width="${w*.18}" height="${h}" fill="#000" opacity=".06"/>
+      ${label?`<text transform="translate(${w/2+5} -34) rotate(-90)" font-family="Cinzel Decorative, Georgia, serif" font-weight="700" font-size="${Math.min(15,w*.3)}" fill="${dark?'#F4E2AA':'#6E5A3A'}" letter-spacing="1">${label}</text>`:''}</g>`;
+  };
+  const fill=(x0,x1,base,maxH)=>{ let s='', x=x0; while(x<x1-26){ const w=Math.round(RR(26,48)), h=Math.round(RR(maxH*.7,maxH)); if(x+w>x1) break;
+      const lean=rnd()<.08&&x+w+30<x1?-9:0; s+=book(x+(lean?8:0),base,w,h,cols[Math.floor(rnd()*cols.length)],lean); x+=w+(lean?16:2); } return s; };
+  const R1=360, R2=620, R3=880, FLOOR=1110;
+  let shelf=`<rect x="50" y="90" width="800" height="1030" rx="10" fill="#7A5A44"/><rect x="72" y="110" width="756" height="1000" fill="#5E4332"/>`;
+  [R1,R2,R3,1102].forEach(y=>shelf+=`<rect x="60" y="${y}" width="780" height="20" rx="3" fill="#8C6A50"/><rect x="60" y="${y+18}" width="780" height="6" fill="#4A3426" opacity=".6"/>`);
+  let books=fill(84,820,R1,215)+fill(84,820,R3,215);
+  // middle shelf: the saga series + our book + room for more chapters
+  books+=fill(84,240,R2,205);
+  const series=[['SAGA I','#3B4C6E'],['SAGA II','#F0C9C9'],['SAGA III','#3B4C6E'],['SAGA IV','#F0C9C9']];
+  series.forEach(([l,c],i)=>books+=book(250+i*56,R2,52,208,c,0,l));
+  const slotX=474;
+  const ours=`<g class="slotBook"><g transform="translate(${slotX} ${R2})"><rect x="0" y="-224" width="62" height="224" rx="3" fill="#F1E6CF"/>
+      <rect x="0" y="-224" width="62" height="224" rx="3" fill="none" stroke="#C9A45A" stroke-width="2"/>
+      <rect x="0" y="-206" width="62" height="6" fill="#8FA98A"/><rect x="0" y="-26" width="62" height="6" fill="#8FA98A"/>
+      <text transform="translate(37 -40) rotate(-90)" font-family="Cinzel Decorative, Georgia, serif" font-weight="700" font-size="13" fill="#56745C" letter-spacing="1">XO &amp; NICLAS</text>
+      ${crown(31,-212,.26,0)}</g></g>`;
+  books+=`<g transform="translate(${slotX+158} ${R2-40})"><g transform="scale(.2)">${frog(0,0,1)}</g></g>`;
+  books+=fill(690,820,R2,205);
+  // decor on top shelf row gaps
+  const candle=(x,y)=>`<circle cx="${x}" cy="${y-60}" r="90" fill="url(#fireG)" opacity=".5"/><rect x="${x-8}" y="${y-40}" width="16" height="40" rx="3" fill="#F6EFE3"/><path d="M${x} ${y-58} q7 10 0 18 q-7 -8 0 -18z" fill="#F6C75E"/>`;
+  let hearts=''; for(let i=0;i<12;i++) hearts+=`<g transform="translate(${RR(320,540).toFixed(0)} ${RR(740,820).toFixed(0)})"><path class="fh" style="--d:${(5.8+i*.35).toFixed(2)}s;--dur:${RR(3.5,5).toFixed(1)}s;--dx:${RR(-40,40).toFixed(0)}px" d="M0 8 C-6 2 -16 -4 -16 -12 C-16 -20 -7 -22 0 -14 C7 -22 16 -20 16 -12 C16 -4 6 2 0 8Z" fill="${['#E6B8AC','#F0C9C9','#D98F86'][i%3]}"/></g>`;
+  let flies=''; for(let i=0;i<22;i++) flies+=`<g transform="translate(${RR(40,860).toFixed(0)} ${RR(700,1500).toFixed(0)})"><g class="ff" style="--d:${(-RR(0,7)).toFixed(1)}s;--dur:${RR(5,9).toFixed(1)}s;--dx:${RR(-50,50).toFixed(0)}px;--dy:${RR(-200,-80).toFixed(0)}px"><circle r="${RR(10,16).toFixed(0)}" fill="url(#fireG)"/><circle r="2.4" fill="#FFF6C8"/></g></g>`;
+  return `<rect width="900" height="1600" fill="#E6D3BA"/>
+    <circle cx="450" cy="700" r="700" fill="url(#glowG)" opacity=".55"/>
+    <g filter="url(#wc)">${shelf}${books}</g>${ours}
+    ${candle(130,90)}${candle(770,90)}
+    <rect x="0" y="${FLOOR}" width="900" height="${1600-FLOOR}" fill="#B99478"/>
+    ${[0,1,2,3,4,5,6].map(i=>`<line x1="0" y1="${FLOOR+30+i*70}" x2="900" y2="${FLOOR+30+i*70}" stroke="#9E7A60" stroke-width="2" opacity=".6"/>`).join('')}
+    <ellipse cx="430" cy="1395" rx="340" ry="68" fill="#F0C9C9" opacity=".75" filter="url(#wc)"/>
+    <ellipse cx="430" cy="1395" rx="298" ry="50" fill="none" stroke="#E6B8AC" stroke-width="6" opacity=".8"/>
+    <g class="couple">
+      <g class="leanR">${prince(466,1392,.975,{flip:true})}</g>
+      <g class="leanL">${xo(370,1392,1.06,{embrace:true})}</g>
+    </g>
+    ${hearts}${flies}`;
 }
 
 /* =====================================================================
@@ -970,15 +1080,17 @@ const SCENES=[
   {id:'comedy',t:54,   label:'Comedy night'},
   {id:'dance', t:62,   label:'Dancing'},
   {id:'night', t:70,   label:'Northern lights'},
-  {id:'end',   t:78,   label:'To be continued'}
+  {id:'end',   t:78,   label:'To be continued'},
+  {id:'saga',  t:93.2, label:'Our saga', special:true}
 ];
-const END_T=94.2;
+const END_T=107.2;
 const $=id=>document.getElementById(id);
+const finale=$('finale'); $('finaleArt').innerHTML=finaleArt();
 const frame=$('frame'), book=$('book'), cover=$('cover'), page=$('page'), fade=$('fade'), endcard=$('endcard');
 $('coverArt').innerHTML=coverArt();
 
 const sceneEls={};
-SCENES.slice(1).forEach(s=>{
+SCENES.slice(1).filter(s=>!s.special).forEach(s=>{
   const el=document.createElement('section'); el.className='scene'; el.dataset.id=s.id;
   el.innerHTML=SCENE_HTML[s.id](); page.insertBefore(el, page.querySelector('.grain')); sceneEls[s.id]=el;
 });
@@ -990,19 +1102,20 @@ function show(id){
   el.classList.remove('on','off'); void el.offsetWidth; el.classList.add('on'); current=el;
   Music.theme(themeFor(id));
 }
-const themeFor=id=>({park:'park',comedy:'comedy',dance:'dance',night:'night',end:'end'})[id]||'main';
+const themeFor=id=>({park:'park',comedy:'comedy',dance:'dance',night:'night',end:'end',saga:'end'})[id]||'main';
 let musicOn=true;
 function restartClass(el,c){ el.classList.remove(c); void el.offsetWidth; el.classList.add(c); }
 
 const CUES=[
   {t:.4,  fn:()=>restartClass(cover,'shine')},
-  ...SCENES.slice(1).map(s=>({t:s.t, fn:()=>show(s.id)})),
+  ...SCENES.slice(1).filter(s=>!s.special).map(s=>({t:s.t, fn:()=>show(s.id)})),
   {t:3.4, fn:()=>{cover.classList.remove('shine'); cover.classList.add('open');}},
   {t:5.4, fn:()=>book.classList.add('zoom')},
   {t:88,  fn:()=>{book.classList.remove('zoom','static-open'); book.classList.add('unzoom');}},
   {t:89.4,fn:()=>{cover.classList.remove('open','gone'); cover.classList.add('close');}},
   {t:91.8,fn:()=>restartClass(cover,'shine')},
-  {t:92.6,fn:()=>fade.classList.add('on')},
+  {t:93.2,fn:()=>{ book.classList.add('shelve'); restartClass(finale,'on'); }},
+  {t:105.6,fn:()=>fade.classList.add('on')},
   {t:END_T,fn:()=>{endcard.hidden=false; Music.stop(3); setPlaying(false); ended=true;}}
 ].sort((a,b)=>a.t-b.t);
 
@@ -1015,7 +1128,7 @@ SCENES.forEach((s,i)=>{
 
 function resetAll(){
   t=0; next=0; current=null; ended=false;
-  book.className='book'; cover.className='cover'; fade.className='fade'; endcard.hidden=true;
+  book.className='book'; cover.className='cover'; fade.className='fade'; finale.className='finale'; endcard.hidden=true;
   Object.values(sceneEls).forEach(s=>s.classList.remove('on','off'));
 }
 function seek(i){
@@ -1023,7 +1136,10 @@ function seek(i){
   resetAll();
   Music.theme(themeFor(SCENES[i].id));
   const s=SCENES[i];
-  if(i>0){
+  if(s.special){
+    book.classList.add('shelved'); restartClass(finale,'on'); t=s.t;
+    next=CUES.findIndex(c=>c.t>t); if(next<0) next=CUES.length;
+  } else if(i>0){
     book.classList.add('static-open'); cover.classList.add('gone');
     t=s.seekT||s.t; show(s.id);
     next=CUES.findIndex(c=>c.t>t); if(next<0) next=CUES.length;
