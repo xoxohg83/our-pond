@@ -457,7 +457,7 @@ a{color:var(--ink)}
       <p class="eyebrow">Our kissing map</p>
       <div class="kmaptitle">Kartan över våra kyssar</div>
       <div class="kstats"><div><b id="st-places">0</b><span>places</span></div><div><b id="st-cities">0</b><span>cities</span></div></div>
-      <div class="row"><button class="btn kissbtn" id="kissHere" type="button">Kiss here</button></div>
+      <div class="row"><button class="btn kissbtn" id="kissHere" type="button">Kiss here</button><button class="btn" id="kissPast" type="button">Add a past kiss</button></div>
       <div class="kchips" id="kchips" role="group" aria-label="Choose a city"></div>
       <div class="mapwrap" id="mapwrap"></div>
       <div class="klegend"><span><i style="background:#D98F86"></i>Added by Xo</span><span><i style="background:#2F4068"></i>Added by Niclas</span></div>
@@ -965,14 +965,15 @@ async function nomi(path){ const r=await fetch('https://nominatim.openstreetmap.
 function fromAddr(j){ const a=(j&&j.address)||{};
   return { place:j.name||a.attraction||a.tourism||a.amenity||a.leisure||a.building||a.road||a.pedestrian||a.neighbourhood||'',
     area:a.suburb||a.neighbourhood||a.quarter||a.city_district||a.borough||'', city:a.city||a.town||a.village||a.municipality||a.county||'', country:a.country||'' }; }
-function openSheet(){
-  clearOv(); let who=me()||'Xo', got=null, near=null;
+function openSheet(opts={}){
+  const past=!!opts.past; clearOv(); let who=me()||'Xo', got=null, near=null;
   const o=overlay(`<div class="kdim"></div><div class="ksheet" role="dialog" aria-modal="true" aria-label="Kiss here">
-    <div class="grab"></div><h3>Kiss here?</h3>
+    <div class="grab"></div><h3>${past?'A kiss to remember':'Kiss here?'}</h3>
     <div class="loc" id="kloc">${pinSvg}<div class="searching"><span class="dot"></span>Finding where you are…</div></div>
     <div id="kfields" hidden>
       <div class="field"><label for="kp">This place</label><input id="kp" maxlength="80" placeholder="The bench by the water"></div>
       <div class="field"><label for="kc">City</label><input id="kc" maxlength="60" placeholder="Stockholm"></div>
+      <div class="field" ${past?'':'hidden'}><label for="kd">When</label><input id="kd" type="date"></div>
     </div>
     <div class="kwho" role="group" aria-label="Who is adding it"><button type="button" data-w="Xo" aria-pressed="${who==='Xo'}"><i style="background:#D98F86"></i>Xo</button><button type="button" data-w="Niclas" aria-pressed="${who==='Niclas'}"><i style="background:#2F4068"></i>Niclas</button></div>
     <div class="field"><label for="kn">A little note (optional)</label><input id="kn" maxlength="100" placeholder="The golden crowns on the bridge, and us"></div>
@@ -981,8 +982,9 @@ function openSheet(){
   const q=s=>o.querySelector(s);
   o.querySelectorAll('.kwho button').forEach(b=>b.addEventListener('click',()=>{ who=b.dataset.w; o.querySelectorAll('.kwho button').forEach(x=>x.setAttribute('aria-pressed',x===b)); }));
   q('#kcancel').addEventListener('click',clearOv); q('.kdim').addEventListener('click',clearOv);
-  const manual=msg=>{ q('#kloc').innerHTML=pinSvg+`<div><strong>Where are we?</strong><span>${msg}</span></div>`; q('#kfields').hidden=false; q('#ksealBtn').disabled=false; q('#kp').focus(); };
-  if(!navigator.geolocation){ manual('This phone could not share its location. Type the place and city.'); }
+  const manual=msg=>{ q('#kloc').innerHTML=pinSvg+`<div><strong>${past?'Where was it?':'Where are we?'}</strong><span>${msg}</span></div>`; q('#kfields').hidden=false; q('#ksealBtn').disabled=false; q('#kp').focus(); };
+  if(past){ manual('Type the name or address of the place, the city and the day. The more exact the name, the better the heart lands.'); const d=new Date(); q('#kd').max=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  else if(!navigator.geolocation){ manual('This phone could not share its location. Type the place and city.'); }
   else navigator.geolocation.getCurrentPosition(async pos=>{
     const lat=pos.coords.latitude, lon=pos.coords.longitude; got={lat,lon};
     near=K.filter(k=>k.lat!=null).map(k=>({k,d:dist(k.lat,k.lon,lat,lon)})).sort((a,b)=>a.d-b.d)[0]; near=near&&near.d<75?near.k:null;
@@ -1001,7 +1003,7 @@ function openSheet(){
       let lat=got&&got.lat, lon=got&&got.lon, area=(got&&got.area)||'', country=(got&&got.country)||'';
       if(lat==null){ try{ let r=await nomi(`search?limit=1&q=${encodeURIComponent(place+', '+city)}`); if(!r.length) r=await nomi(`search?limit=1&q=${encodeURIComponent(city)}`); if(r.length){ lat=+r[0].lat; lon=+r[0].lon; const a=fromAddr(r[0]); area=area||a.area; country=country||a.country; } }catch(e){} }
       const today=new Date(), p=n=>String(n).padStart(2,'0');
-      const row={place, area, city, country, lat:lat??null, lon:lon??null, note, added_by:who, kissed_on:`${today.getFullYear()}-${p(today.getMonth()+1)}-${p(today.getDate())}`};
+      const row={place, area, city, country, lat:lat??null, lon:lon??null, note, added_by:who, kissed_on:(past&&q('#kd').value)||`${today.getFullYear()}-${p(today.getMonth()+1)}-${p(today.getDate())}`};
       const saved=await Store.addKiss(row); K.push(saved); dropped=saved.id; view=slug(city); lastSig='';
       sealAnim(true,place);
     }catch(err){ console.error(err); q('#kmsg').textContent=String(err&&err.message||'').includes('kisses')?'The kissing map needs its setup step in Supabase first (kisses-setup.sql).':errMsg(err); b.disabled=false; }
@@ -1020,7 +1022,8 @@ function wire(){
   $k('mapwrap').addEventListener('click',e=>{ const g=e.target.closest('.pin'); if(g) act(g); });
   $k('mapwrap').addEventListener('keydown',e=>{ const g=e.target.closest('.pin'); if(g&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); act(g); } });
   $k('p-kiss').addEventListener('click',e=>{ const b=e.target.closest('[data-m]'); if(b) celebrate(+b.dataset.m); });
-  $k('kissHere').addEventListener('click',openSheet);
+  $k('kissHere').addEventListener('click',()=>openSheet());
+  $k('kissPast').addEventListener('click',()=>openSheet({past:true}));
   $k('kRoute').addEventListener('click',()=>{ routeOn=!routeOn; $k('kRoute').setAttribute('aria-pressed',routeOn); $k('mapwrap').querySelectorAll('.kroute').forEach(r=>{ r.setAttribute('opacity',routeOn?1:0); if(routeOn){ r.classList.remove('draw'); void r.getBoundingClientRect(); r.classList.add('draw'); } }); });
   $k('kNight').addEventListener('click',()=>{ nightOn=!nightOn; $k('kNight').setAttribute('aria-pressed',nightOn); $k('mapwrap').classList.toggle('isnight',nightOn); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape') clearOv(); });
